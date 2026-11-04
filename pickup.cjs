@@ -33282,8 +33282,8 @@ var require_libbase64 = __commonJS({
       return Number.isFinite(length) && length >= 1 ? length : 76;
     }
     function wrapBuffer2(src, lineLength, final) {
-      let lines = Math.ceil(src.length / lineLength);
-      let complete = Math.max(lines - 1, 0);
+      let lines2 = Math.ceil(src.length / lineLength);
+      let complete = Math.max(lines2 - 1, 0);
       let rest = src.length - complete * lineLength;
       let output = node_buffer_1.Buffer.allocUnsafe(complete * (lineLength + 2) + (final ? rest : 0));
       let to = 0;
@@ -36384,7 +36384,7 @@ var require_libmime = __commonJS({
        */
       decodeFlowed(input, delSp) {
         let str = (input || "").toString();
-        let lines = str.split(/\r?\n/);
+        let lines2 = str.split(/\r?\n/);
         let result = [];
         let parts = [], partsLength = 0, depth = 0, prefix = "";
         let pushPart = (part) => {
@@ -36393,8 +36393,8 @@ var require_libmime = __commonJS({
             partsLength += part.length;
           }
         };
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
+        for (let i = 0; i < lines2.length; i++) {
+          let line = lines2[i];
           let lineDepth = 0;
           while (line.charCodeAt(lineDepth) === 62) {
             lineDepth++;
@@ -36659,24 +36659,24 @@ var require_libmime = __commonJS({
        * @return {Object} An object of headers, where header keys are object keys and every value is an Array of the values for that key
        */
       decodeHeaders(headers, options) {
-        let lines = headers.split(/\r?\n|\r/), headersObj = {}, header, i, len;
+        let lines2 = headers.split(/\r?\n|\r/), headersObj = {}, header, i, len;
         let headersPos = 0;
-        while (headersPos < lines.length && lines[headersPos] === "") {
+        while (headersPos < lines2.length && lines2[headersPos] === "") {
           headersPos++;
         }
-        let bodyPos = lines.indexOf("", headersPos);
-        lines = lines.slice(headersPos, bodyPos >= 0 ? bodyPos : lines.length);
+        let bodyPos = lines2.indexOf("", headersPos);
+        lines2 = lines2.slice(headersPos, bodyPos >= 0 ? bodyPos : lines2.length);
         let unfolded = [];
-        for (i = 0, len = lines.length; i < len; i++) {
-          if (unfolded.length && /^[ \t]/.test(lines[i])) {
-            unfolded[unfolded.length - 1] += "\r\n" + lines[i];
+        for (i = 0, len = lines2.length; i < len; i++) {
+          if (unfolded.length && /^[ \t]/.test(lines2[i])) {
+            unfolded[unfolded.length - 1] += "\r\n" + lines2[i];
           } else {
-            unfolded.push(lines[i]);
+            unfolded.push(lines2[i]);
           }
         }
-        lines = unfolded;
-        for (i = 0, len = lines.length; i < len; i++) {
-          header = this.decodeHeader(lines[i]);
+        lines2 = unfolded;
+        for (i = 0, len = lines2.length; i < len; i++) {
+          header = this.decodeHeader(lines2[i]);
           if (options?.skipPrototypeKeys && PROTOTYPE_KEYS2.has(header.key)) {
             continue;
           }
@@ -37084,7 +37084,7 @@ var require_libmime = __commonJS({
        * @return {Array} Split string
        */
       splitMimeEncodedString(str, maxlen) {
-        let curLine, fallbackLine, match3, chr, done, lines = [];
+        let curLine, fallbackLine, match3, chr, done, lines2 = [];
         maxlen = Math.max(maxlen || 0, 12);
         while (str.length) {
           curLine = str.substring(0, maxlen);
@@ -37106,10 +37106,10 @@ var require_libmime = __commonJS({
           if (!curLine.length) {
             curLine = fallbackLine;
           }
-          lines.push(curLine);
+          lines2.push(curLine);
           str = str.slice(curLine.length);
         }
-        return lines;
+        return lines2;
       }
       encodeURICharComponent(chr) {
         let res = "";
@@ -37178,9 +37178,9 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         key = this._normalizeHeader(key);
-        return typeof lines.find((line) => line.key === key) === "object";
+        return typeof lines2.find((line) => line.key === key) === "object";
       }
       /**
        * @param {string} key
@@ -37192,8 +37192,8 @@ var require_headers = __commonJS({
         }
         let headerLines = this._getLines();
         key = this._normalizeHeader(key);
-        let lines = headerLines.filter((line) => line.key === key).map((line) => this._decodeHeaderValue(line.line));
-        return lines;
+        let lines2 = headerLines.filter((line) => line.key === key).map((line) => this._decodeHeaderValue(line.line));
+        return lines2;
       }
       /**
        * @param {string} key
@@ -37210,9 +37210,9 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         key = this._normalizeHeader(key);
-        let header = lines.find((line) => line.key === key);
+        let header = lines2.find((line) => line.key === key);
         if (!header) {
           return "";
         }
@@ -37256,7 +37256,7 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         index = index || 0;
         this.changed = true;
         if (!line) {
@@ -37274,11 +37274,11 @@ var require_headers = __commonJS({
           line
         };
         if (index < 1) {
-          lines.unshift(header);
-        } else if (index >= lines.length) {
-          lines.push(header);
+          lines2.unshift(header);
+        } else if (index >= lines2.length) {
+          lines2.push(header);
         } else {
-          lines.splice(index, 0, header);
+          lines2.splice(index, 0, header);
         }
       }
       /**
@@ -37289,12 +37289,12 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         key = this._normalizeHeader(key);
-        for (let i = lines.length - 1; i >= 0; i--) {
-          if (lines[i].key === key) {
+        for (let i = lines2.length - 1; i >= 0; i--) {
+          if (lines2[i].key === key) {
             this.changed = true;
-            lines.splice(i, 1);
+            lines2.splice(i, 1);
           }
         }
       }
@@ -37308,21 +37308,21 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         let keyName = key;
         let index = 0;
         key = this._normalizeHeader(key);
         let relativeIndexCount = 0;
         let relativeMatchFound = false;
-        for (let i = lines.length - 1; i >= 0; i--) {
-          if (lines[i].key === key) {
+        for (let i = lines2.length - 1; i >= 0; i--) {
+          if (lines2[i].key === key) {
             if (relativeIndex && relativeIndex !== relativeIndexCount) {
               relativeIndexCount++;
               continue;
             }
             index = i;
             this.changed = true;
-            lines.splice(i, 1);
+            lines2.splice(i, 1);
             if (relativeIndex) {
               relativeMatchFound = true;
               break;
@@ -37348,9 +37348,9 @@ var require_headers = __commonJS({
         if (!this.parsed) {
           this._parseHeaders();
         }
-        let lines = this._getLines();
+        let lines2 = this._getLines();
         const ending = lineEnd || "\r\n";
-        let headers = lines.map((line) => this._normalizeLineBreaks(line.line, ending)).filter((line) => line !== "").map((line) => this._buildHeaderLine(line)).reduce(
+        let headers = lines2.map((line) => this._normalizeLineBreaks(line.line, ending)).filter((line) => line !== "").map((line) => this._buildHeaderLine(line)).reduce(
           (joined, line, idx) => {
             if (idx) {
               joined.push(Buffer.from(ending, "binary"));
@@ -37453,19 +37453,19 @@ var require_headers = __commonJS({
         while (i < rawLines.length && this._isFoldingChar(rawLines[i].charAt(0))) {
           first2 += "\r\n" + rawLines[i++];
         }
-        let lines = [];
+        let lines2 = [];
         if (/^From /i.test(first2)) {
           this.mbox = first2;
         } else if (/^POST /i.test(first2)) {
           this.http = first2;
         } else {
-          lines.push({ key: this._normalizeHeader(first2.substr(0, first2.indexOf(":"))), line: first2 });
+          lines2.push({ key: this._normalizeHeader(first2.substr(0, first2.indexOf(":"))), line: first2 });
         }
         let keyPending = false;
         for (; i < rawLines.length; i++) {
           let currentLine = rawLines[i];
           if (this._isFoldingChar(currentLine.charAt(0))) {
-            let entry = lines[lines.length - 1];
+            let entry = lines2[lines2.length - 1];
             if (keyPending) {
               let colon = currentLine.indexOf(":");
               if (colon >= 0) {
@@ -37476,11 +37476,11 @@ var require_headers = __commonJS({
             entry.line += "\r\n" + currentLine;
           } else {
             let colon = currentLine.indexOf(":");
-            lines.push({ key: this._normalizeHeader(currentLine.substr(0, colon)), line: currentLine });
+            lines2.push({ key: this._normalizeHeader(currentLine.substr(0, colon)), line: currentLine });
             keyPending = colon < 0;
           }
         }
-        this.lines = lines;
+        this.lines = lines2;
         this.parsed = true;
       }
       /**
@@ -42563,8 +42563,8 @@ function normalizeLineLength(lineLength) {
   return Number.isFinite(length) && length >= 1 ? length : 76;
 }
 function wrapBuffer(src, lineLength, final) {
-  let lines = Math.ceil(src.length / lineLength);
-  let complete = Math.max(lines - 1, 0);
+  let lines2 = Math.ceil(src.length / lineLength);
+  let complete = Math.max(lines2 - 1, 0);
   let rest = src.length - complete * lineLength;
   let output = import_node_buffer.Buffer.allocUnsafe(complete * (lineLength + 2) + (final ? rest : 0));
   let to = 0;
@@ -45564,7 +45564,7 @@ var Libmime = class {
    */
   decodeFlowed(input, delSp) {
     let str = (input || "").toString();
-    let lines = str.split(/\r?\n/);
+    let lines2 = str.split(/\r?\n/);
     let result = [];
     let parts = [], partsLength = 0, depth = 0, prefix = "";
     let pushPart = (part) => {
@@ -45573,8 +45573,8 @@ var Libmime = class {
         partsLength += part.length;
       }
     };
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i];
+    for (let i = 0; i < lines2.length; i++) {
+      let line = lines2[i];
       let lineDepth = 0;
       while (line.charCodeAt(lineDepth) === 62) {
         lineDepth++;
@@ -45839,24 +45839,24 @@ var Libmime = class {
    * @return {Object} An object of headers, where header keys are object keys and every value is an Array of the values for that key
    */
   decodeHeaders(headers, options) {
-    let lines = headers.split(/\r?\n|\r/), headersObj = {}, header, i, len;
+    let lines2 = headers.split(/\r?\n|\r/), headersObj = {}, header, i, len;
     let headersPos = 0;
-    while (headersPos < lines.length && lines[headersPos] === "") {
+    while (headersPos < lines2.length && lines2[headersPos] === "") {
       headersPos++;
     }
-    let bodyPos = lines.indexOf("", headersPos);
-    lines = lines.slice(headersPos, bodyPos >= 0 ? bodyPos : lines.length);
+    let bodyPos = lines2.indexOf("", headersPos);
+    lines2 = lines2.slice(headersPos, bodyPos >= 0 ? bodyPos : lines2.length);
     let unfolded = [];
-    for (i = 0, len = lines.length; i < len; i++) {
-      if (unfolded.length && /^[ \t]/.test(lines[i])) {
-        unfolded[unfolded.length - 1] += "\r\n" + lines[i];
+    for (i = 0, len = lines2.length; i < len; i++) {
+      if (unfolded.length && /^[ \t]/.test(lines2[i])) {
+        unfolded[unfolded.length - 1] += "\r\n" + lines2[i];
       } else {
-        unfolded.push(lines[i]);
+        unfolded.push(lines2[i]);
       }
     }
-    lines = unfolded;
-    for (i = 0, len = lines.length; i < len; i++) {
-      header = this.decodeHeader(lines[i]);
+    lines2 = unfolded;
+    for (i = 0, len = lines2.length; i < len; i++) {
+      header = this.decodeHeader(lines2[i]);
       if (options?.skipPrototypeKeys && PROTOTYPE_KEYS.has(header.key)) {
         continue;
       }
@@ -46264,7 +46264,7 @@ var Libmime = class {
    * @return {Array} Split string
    */
   splitMimeEncodedString(str, maxlen) {
-    let curLine, fallbackLine, match3, chr, done, lines = [];
+    let curLine, fallbackLine, match3, chr, done, lines2 = [];
     maxlen = Math.max(maxlen || 0, 12);
     while (str.length) {
       curLine = str.substring(0, maxlen);
@@ -46286,10 +46286,10 @@ var Libmime = class {
       if (!curLine.length) {
         curLine = fallbackLine;
       }
-      lines.push(curLine);
+      lines2.push(curLine);
       str = str.slice(curLine.length);
     }
-    return lines;
+    return lines2;
   }
   encodeURICharComponent(chr) {
     let res = "";
@@ -63093,9 +63093,9 @@ var MailParser = class extends import_node_stream10.Transform {
     }
   }
   /** @internal */
-  processHeaders(lines) {
+  processHeaders(lines2) {
     let headers = /* @__PURE__ */ new Map();
-    (lines || []).forEach((line) => {
+    (lines2 || []).forEach((line) => {
       let key = line.key;
       let value = ((this.libmime.decodeHeader(line.line) || {}).value || "").toString().trim();
       value = Buffer.from(value, "binary").toString();
@@ -63990,12 +63990,18 @@ function simpleParser(input, options, callback) {
 var simple_parser_default = simpleParser;
 
 // pickup/extract.mjs
+function lines(html) {
+  return html.replace(/<(style|script|head)\b[\s\S]*?<\/\1>/gi, " ").replace(/<br\b[^>]*>|<\/(?:p|div|td|tr|li|table|h[1-6])\s*>/gi, "\n").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;|&#34;/gi, '"').replace(/&#39;|&apos;/gi, "'");
+}
 function visibleText(html) {
-  return html.replace(/<(style|script|head)\b[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;|&#34;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/\s+/g, " ").trim();
+  return lines(html).replace(/\s+/g, " ").trim();
 }
 var CODE_LABEL = "(?:verification\\s+code|security\\s+code|login\\s+code|one[-\\s]?time\\s+(?:code|password|passcode)|passcode|otp|pin|code|\u9A8C\u8BC1\u7801|\u9A57\u8B49\u78BC|\u6821\u9A8C\u7801|\u6821\u9A57\u78BC|\u52A8\u6001\u7801|\u52D5\u614B\u78BC|\u786E\u8BA4\u7801|\u78BA\u8A8D\u78BC|\u5B89\u5168\u7801|\u5B89\u5168\u78BC)";
-var AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])[^\\d.!?\u3002\uFF01\uFF1F]{0,60}?(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)`, "gi");
-var BEFORE_LABEL = new RegExp(`(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)[^\\d.!?\u3002\uFF01\uFF1F]{0,40}?(?<![a-z])${CODE_LABEL}(?![a-z])`, "gi");
+var DIGITS = "(?<![\\d.,:-])(\\d{3}[ -]\\d{3}|\\d{4,8})(?![\\d%]|[.,:-]\\d| \\d)";
+var AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])[^\\d.!?\u3002\uFF01\uFF1F]{0,60}?${DIGITS}`, "gi");
+var BEFORE_LABEL = new RegExp(`${DIGITS}[^\\d.!?\u3002\uFF01\uFF1F]{0,40}?(?<![a-z])${CODE_LABEL}(?![a-z])`, "gi");
+var HAS_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])`, "i");
+var ALONE = /^[ \t]*(\d{3}[ -]\d{3}|\d{4,8})[ \t]*$/gm;
 var MIXED_AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])\\s*(?:is|\u4E3A|\u662F|:|\uFF1A)?\\s*[:\uFF1A]?\\s*([A-Z0-9]{2,5}-?[A-Z0-9]{2,5})(?![A-Za-z0-9])`, "gi");
 function plausible(code) {
   if (/^(\d)\1+$/.test(code)) return false;
@@ -64003,15 +64009,20 @@ function plausible(code) {
 }
 function extractCodes(subject, text, html) {
   const value = `${subject}
-${text || visibleText(html)}`;
-  const found = [...value.matchAll(AFTER_LABEL), ...value.matchAll(BEFORE_LABEL)].map((match3) => match3[1]).filter(plausible);
+${text}
+${visibleText(html)}`;
+  const digits = (matches) => matches.map((match3) => match3[1].replace(/[ -]/g, "")).filter(plausible);
+  const found = digits([...value.matchAll(AFTER_LABEL), ...value.matchAll(BEFORE_LABEL)]);
   for (const match3 of value.matchAll(MIXED_AFTER_LABEL)) {
     if (/\d/.test(match3[1]) && /[A-Z]/.test(match3[1]) && match3[1] === match3[1].toUpperCase()) found.push(match3[1]);
   }
+  if (!found.length && HAS_LABEL.test(value)) found.push(...digits([...`${text}
+${lines(html)}`.matchAll(ALONE)]));
   return [...new Set(found)].slice(0, 2);
 }
 var LINK_WANTED = /verif|confirm|activat|validat|magic|sign[-_ ]?in|log[-_ ]?in|reset|password|验证|驗證|确认|確認|激活|啟用|登录|登入|重置/i;
 var LINK_UNWANTED = /unsubscribe|退订|退訂|privacy|隐私|隱私|terms|preferences|\/help\b|\/support\b/i;
+var LINK_GENERIC = /click here|continue|get started|点击|點擊|继续|繼續/i;
 function cleanLink(value) {
   try {
     const url = new URL(value.replace(/&amp;|&#38;|&#x26;/gi, "&").trim());
@@ -64021,17 +64032,21 @@ function cleanLink(value) {
     return null;
   }
 }
-function extractLinks(text, html) {
+function linkLabel(html) {
+  return visibleText(html) || (html.match(/<img\b[^>]*\balt\s*=\s*["']([^"']+)["']/i)?.[1] ?? "");
+}
+function extractLinks(text, html, subject = "") {
   const candidates = [
-    ...Array.from(html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi), (match3) => ({ url: match3[1], label: visibleText(match3[2]) })),
+    ...Array.from(html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi), (match3) => ({ url: match3[1], label: linkLabel(match3[2]) })),
     ...Array.from(text.matchAll(/https?:\/\/[^\s<>"')\]]+/gi), (match3) => ({ url: match3[0], label: "" }))
   ];
   const links = /* @__PURE__ */ new Map();
   for (const { url: raw, label } of candidates) {
     const url = cleanLink(raw);
     if (!url || links.has(url)) continue;
-    const context = `${label} ${url}`;
-    if (LINK_WANTED.test(context) && !LINK_UNWANTED.test(context)) links.set(url, { url, label: label.slice(0, 60) });
+    const wanted = LINK_WANTED.test(`${label} ${url}`) || LINK_GENERIC.test(label) && LINK_WANTED.test(subject);
+    const { origin, pathname } = new URL(url);
+    if (wanted && !LINK_UNWANTED.test(`${label} ${origin}${pathname}`)) links.set(url, { url, label: label.slice(0, 60) });
   }
   return [...links.values()].slice(0, 3);
 }
@@ -64072,16 +64087,14 @@ async function readFolder(client, path) {
   }
 }
 async function toItem(message, folder) {
-  if (!message.source) return null;
-  const parsed = await simple_parser_default(message.source, { skipImageLinks: true });
-  const subject = parsed.subject ?? "";
-  const text = parsed.text ?? "";
-  const html = typeof parsed.html === "string" ? parsed.html : "";
-  const codes = extractCodes(subject, text, html);
-  const links = extractLinks(text, html);
-  if (!codes.length && !links.length) return null;
-  const date = message.envelope?.date ?? parsed.date;
-  return { from: (parsed.from?.text ?? "").slice(0, 200), subject: subject.slice(0, 200), date: date ? new Date(date).toISOString() : null, folder, codes, links };
+  const { envelope } = message;
+  const parsed = message.source ? await simple_parser_default(message.source, { skipImageLinks: true }).catch(() => null) : null;
+  const subject = parsed?.subject ?? envelope?.subject ?? "";
+  const text = parsed?.text ?? "";
+  const html = typeof parsed?.html === "string" ? parsed.html : "";
+  const from = parsed?.from?.text ?? envelope?.from?.[0]?.address ?? "";
+  const date = envelope?.date ?? parsed?.date;
+  return { from: from.slice(0, 200), subject: subject.slice(0, 200), date: date ? new Date(date).toISOString() : null, folder, codes: extractCodes(subject, text, html), links: extractLinks(text, html, subject) };
 }
 async function fetchMailbox(account) {
   const { token: token2, refreshToken } = await accessToken(account);
@@ -64108,10 +64121,7 @@ async function fetchMailbox(account) {
     for (const { path, folder } of folders) {
       const found = await readFolder(client, path);
       scanned += found.length;
-      for (const message of found) {
-        const item = await toItem(message, folder).catch(() => null);
-        if (item) messages.push(item);
-      }
+      for (const message of found) messages.push(await toItem(message, folder));
     }
     messages.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
     return { scanned, messages, refreshToken };
