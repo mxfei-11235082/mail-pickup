@@ -63997,11 +63997,10 @@ function visibleText(html) {
   return lines(html).replace(/\s+/g, " ").trim();
 }
 var CODE_LABEL = "(?:verification\\s+code|security\\s+code|login\\s+code|one[-\\s]?time\\s+(?:code|password|passcode)|passcode|otp|pin|code|\u9A8C\u8BC1\u7801|\u9A57\u8B49\u78BC|\u6821\u9A8C\u7801|\u6821\u9A57\u78BC|\u52A8\u6001\u7801|\u52D5\u614B\u78BC|\u786E\u8BA4\u7801|\u78BA\u8A8D\u78BC|\u5B89\u5168\u7801|\u5B89\u5168\u78BC)";
-var DIGITS = "(?<![\\d.,:-])(\\d{3}[ -]\\d{3}|\\d{4,8})(?![\\d%]|[.,:-]\\d| \\d)";
-var AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])[^\\d.!?\u3002\uFF01\uFF1F]{0,60}?${DIGITS}`, "gi");
-var BEFORE_LABEL = new RegExp(`${DIGITS}[^\\d.!?\u3002\uFF01\uFF1F]{0,40}?(?<![a-z])${CODE_LABEL}(?![a-z])`, "gi");
+var AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])[^\\d.!?\u3002\uFF01\uFF1F]{0,60}?(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)`, "gi");
+var BEFORE_LABEL = new RegExp(`(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)[^\\d.!?\u3002\uFF01\uFF1F]{0,40}?(?<![a-z])${CODE_LABEL}(?![a-z])`, "gi");
 var HAS_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])`, "i");
-var ALONE = /^[ \t]*(\d{3}[ -]\d{3}|\d{4,8})[ \t]*$/gm;
+var ALONE = /^[ \t]*(\d{4,8})[ \t]*$/gm;
 var MIXED_AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])\\s*(?:is|\u4E3A|\u662F|:|\uFF1A)?\\s*[:\uFF1A]?\\s*([A-Z0-9]{2,5}-?[A-Z0-9]{2,5})(?![A-Za-z0-9])`, "gi");
 function plausible(code) {
   if (/^(\d)\1+$/.test(code)) return false;
@@ -64011,7 +64010,7 @@ function extractCodes(subject, text, html) {
   const value = `${subject}
 ${text}
 ${visibleText(html)}`;
-  const digits = (matches) => matches.map((match3) => match3[1].replace(/[ -]/g, "")).filter(plausible);
+  const digits = (matches) => matches.map((match3) => match3[1]).filter(plausible);
   const found = digits([...value.matchAll(AFTER_LABEL), ...value.matchAll(BEFORE_LABEL)]);
   for (const match3 of value.matchAll(MIXED_AFTER_LABEL)) {
     if (/\d/.test(match3[1]) && /[A-Z]/.test(match3[1]) && match3[1] === match3[1].toUpperCase()) found.push(match3[1]);
@@ -64022,7 +64021,6 @@ ${lines(html)}`.matchAll(ALONE)]));
 }
 var LINK_WANTED = /verif|confirm|activat|validat|magic|sign[-_ ]?in|log[-_ ]?in|reset|password|验证|驗證|确认|確認|激活|啟用|登录|登入|重置/i;
 var LINK_UNWANTED = /unsubscribe|退订|退訂|privacy|隐私|隱私|terms|preferences|\/help\b|\/support\b/i;
-var LINK_GENERIC = /click here|continue|get started|点击|點擊|继续|繼續/i;
 function cleanLink(value) {
   try {
     const url = new URL(value.replace(/&amp;|&#38;|&#x26;/gi, "&").trim());
@@ -64032,21 +64030,17 @@ function cleanLink(value) {
     return null;
   }
 }
-function linkLabel(html) {
-  return visibleText(html) || (html.match(/<img\b[^>]*\balt\s*=\s*["']([^"']+)["']/i)?.[1] ?? "");
-}
-function extractLinks(text, html, subject = "") {
+function extractLinks(text, html) {
   const candidates = [
-    ...Array.from(html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi), (match3) => ({ url: match3[1], label: linkLabel(match3[2]) })),
+    ...Array.from(html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi), (match3) => ({ url: match3[1], label: visibleText(match3[2]) })),
     ...Array.from(text.matchAll(/https?:\/\/[^\s<>"')\]]+/gi), (match3) => ({ url: match3[0], label: "" }))
   ];
   const links = /* @__PURE__ */ new Map();
   for (const { url: raw, label } of candidates) {
     const url = cleanLink(raw);
     if (!url || links.has(url)) continue;
-    const wanted = LINK_WANTED.test(`${label} ${url}`) || LINK_GENERIC.test(label) && LINK_WANTED.test(subject);
     const { origin, pathname } = new URL(url);
-    if (wanted && !LINK_UNWANTED.test(`${label} ${origin}${pathname}`)) links.set(url, { url, label: label.slice(0, 60) });
+    if (LINK_WANTED.test(`${label} ${url}`) && !LINK_UNWANTED.test(`${label} ${origin}${pathname}`)) links.set(url, { url, label: label.slice(0, 60) });
   }
   return [...links.values()].slice(0, 3);
 }
@@ -64094,7 +64088,7 @@ async function toItem(message, folder) {
   const html = typeof parsed?.html === "string" ? parsed.html : "";
   const from = parsed?.from?.text ?? envelope?.from?.[0]?.address ?? "";
   const date = envelope?.date ?? parsed?.date;
-  return { from: from.slice(0, 200), subject: subject.slice(0, 200), date: date ? new Date(date).toISOString() : null, folder, codes: extractCodes(subject, text, html), links: extractLinks(text, html, subject) };
+  return { from: from.slice(0, 200), subject: subject.slice(0, 200), date: date ? new Date(date).toISOString() : null, folder, codes: extractCodes(subject, text, html), links: extractLinks(text, html) };
 }
 async function fetchMailbox(account) {
   const { token: token2, refreshToken } = await accessToken(account);
