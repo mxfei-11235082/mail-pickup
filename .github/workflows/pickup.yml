@@ -1,0 +1,25 @@
+name: pickup
+run-name: pickup
+
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: 'request id'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  pickup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - run: node pickup.cjs
+        env:
+          PICKUP_REQUEST: ${{ inputs.request }}
+          PICKUP_URL: ${{ secrets.PICKUP_URL }}
