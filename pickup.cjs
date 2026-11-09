@@ -63996,6 +63996,12 @@ function lines(html) {
 function visibleText(html) {
   return lines(html).replace(/\s+/g, " ").trim();
 }
+function bodyText(text, html, max) {
+  const tidy = (value) => value.replace(/[ \t\r\f\v]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const plain = tidy(text);
+  const rendered = tidy(lines(html));
+  return (rendered.length > plain.length ? rendered : plain).slice(0, max);
+}
 var CODE_LABEL = "(?:verification\\s+code|security\\s+code|login\\s+code|one[-\\s]?time\\s+(?:code|password|passcode)|passcode|otp|pin|code|\u9A8C\u8BC1\u7801|\u9A57\u8B49\u78BC|\u6821\u9A8C\u7801|\u6821\u9A57\u78BC|\u52A8\u6001\u7801|\u52D5\u614B\u78BC|\u786E\u8BA4\u7801|\u78BA\u8A8D\u78BC|\u5B89\u5168\u7801|\u5B89\u5168\u78BC)";
 var AFTER_LABEL = new RegExp(`(?<![a-z])${CODE_LABEL}(?![a-z])[^\\d.!?\u3002\uFF01\uFF1F]{0,60}?(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)`, "gi");
 var BEFORE_LABEL = new RegExp(`(?<![\\d.,:-])(\\d{4,8})(?![\\d%]|[.,:-]\\d)[^\\d.!?\u3002\uFF01\uFF1F]{0,40}?(?<![a-z])${CODE_LABEL}(?![a-z])`, "gi");
@@ -64048,6 +64054,9 @@ function extractLinks(text, html) {
 // pickup/index.mjs
 var SCAN_PER_FOLDER = 20;
 var MAX_SOURCE_BYTES = 512 * 1024;
+var MAX_BODY = 1e4;
+var MAX_HTML = 3e5;
+var MAX_HTML_TOTAL = 2e6;
 var TIMEOUT = 15e3;
 var AuthError = class extends Error {
 };
@@ -64082,13 +64091,30 @@ async function readFolder(client, path) {
 }
 async function toItem(message, folder) {
   const { envelope } = message;
-  const parsed = message.source ? await simple_parser_default(message.source, { skipImageLinks: true }).catch(() => null) : null;
+  const parsed = message.source ? await simple_parser_default(message.source).catch(() => null) : null;
   const subject = parsed?.subject ?? envelope?.subject ?? "";
   const text = parsed?.text ?? "";
   const html = typeof parsed?.html === "string" ? parsed.html : "";
   const from = parsed?.from?.text ?? envelope?.from?.[0]?.address ?? "";
   const date = envelope?.date ?? parsed?.date;
-  return { from: from.slice(0, 200), subject: subject.slice(0, 200), date: date ? new Date(date).toISOString() : null, folder, codes: extractCodes(subject, text, html), links: extractLinks(text, html) };
+  return {
+    from: from.slice(0, 200),
+    subject: subject.slice(0, 200),
+    date: date ? new Date(date).toISOString() : null,
+    folder,
+    codes: extractCodes(subject, text, html),
+    links: extractLinks(text, html),
+    body: bodyText(text, html, MAX_BODY),
+    html
+  };
+}
+function limitHtml(messages) {
+  let total = 0;
+  return messages.map(({ html, ...item }) => {
+    if (!html || html.length > MAX_HTML || total + html.length > MAX_HTML_TOTAL) return item;
+    total += html.length;
+    return { ...item, html };
+  });
 }
 async function fetchMailbox(account) {
   const { token: token2, refreshToken } = await accessToken(account);
@@ -64118,7 +64144,7 @@ async function fetchMailbox(account) {
       for (const message of found) messages.push(await toItem(message, folder));
     }
     messages.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
-    return { scanned, messages, refreshToken };
+    return { scanned, messages: limitHtml(messages), refreshToken };
   } catch (error2) {
     throw error2.authenticationFailed ? new AuthError() : error2;
   } finally {
