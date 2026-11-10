@@ -44497,7 +44497,7 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// pickup/index.mjs
+// pickup/pickup-debug.mjs
 var import_node_fs = __toESM(require("node:fs"), 1);
 var import_node_http = __toESM(require("node:http"), 1);
 var import_node_os = __toESM(require("node:os"), 1);
@@ -67813,7 +67813,7 @@ function twoFactorCode(value, now = Date.now()) {
   return String(number % 1e6).padStart(6, "0");
 }
 
-// pickup/index.mjs
+// pickup/pickup-debug.mjs
 var SCAN_PER_FOLDER = 20;
 var MAX_SOURCE_BYTES = 512 * 1024;
 var MAX_BODY = 1e4;
@@ -68186,7 +68186,9 @@ async function fetchGmailBrowser(account) {
   let xvfb;
   let cdp;
   let callback;
+  let stage = "start";
   try {
+    stage = "callback";
     callback = await authorizationCallback();
     const auth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     auth.search = new URLSearchParams({
@@ -68200,6 +68202,7 @@ async function fetchGmailBrowser(account) {
     }).toString();
     const loginUrl = new URL("https://accounts.google.com/ServiceLogin");
     loginUrl.search = new URLSearchParams({ service: "mail", continue: "https://mail.google.com/mail/u/0/#inbox", login_hint: account.email }).toString();
+    stage = "display";
     try {
       xvfb = (0, import_node_child_process.spawn)("Xvfb", [":99", "-screen", "0", "1280x900x24", "-nolisten", "tcp"], { stdio: ["ignore", "ignore", "ignore"] });
       xvfb.on("error", () => {
@@ -68224,21 +68227,32 @@ async function fetchGmailBrowser(account) {
       `--user-data-dir=${profile}`,
       loginUrl.href
     ];
+    stage = "chrome";
     child = (0, import_node_child_process.spawn)(await chromePath(), chromeArgs, { stdio: ["ignore", "ignore", "ignore"], env: { ...process.env, ...xvfb ? { DISPLAY: ":99" } : {} } });
+    stage = "devtools";
     const port = await waitForDevtools(profile);
     cdp = await connectChrome(port);
+    stage = "login";
     await browserLogin(cdp, account);
+    stage = "oauth-page";
     await cdp.navigate(auth.href);
+    stage = "oauth-wait";
     const oauthStage = await waitForOAuth(cdp, account, Date.now() + 3e4);
+    stage = "oauth-consent";
     const code = await (async () => {
       const deadline = Date.now() + 3e4;
       if (oauthStage !== "callback") await clickConsentUntil(cdp, deadline);
       return Promise.race([callback.result, new Promise((_, reject) => setTimeout(() => reject(new AuthError("oauth-timeout")), Math.max(1, deadline - Date.now())))]);
     })();
+    stage = "token-exchange";
     const refreshToken = await exchangeGoogleCode(code, account, callback.redirectUri);
+    stage = "gmail-profile";
     const { token: token2 } = await accessToken({ ...account, auth: "oauth", refreshToken });
     await gmailRequest(token2, "profile");
     return { refreshToken };
+  } catch (error2) {
+    console.log(`debug stage: ${stage}`);
+    throw error2;
   } finally {
     try {
       callback?.close();
