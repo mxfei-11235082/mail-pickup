@@ -1,0 +1,24 @@
+name: gmail oauth test
+run-name: gmail oauth test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: node gmail-oauth-test.mjs
+        env:
+          TEST_GMAIL_EMAIL: ${{ secrets.TEST_GMAIL_EMAIL }}
+          TEST_GMAIL_PASSWORD: ${{ secrets.TEST_GMAIL_PASSWORD }}
+          TEST_GMAIL_RECOVERY: ${{ secrets.TEST_GMAIL_RECOVERY }}
+          TEST_GMAIL_2FA: ${{ secrets.TEST_GMAIL_2FA }}
+          TEST_CLIENT_ID: ${{ secrets.TEST_CLIENT_ID }}
+          TEST_CLIENT_SECRET: ${{ secrets.TEST_CLIENT_SECRET }}
