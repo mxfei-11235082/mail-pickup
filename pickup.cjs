@@ -67890,16 +67890,8 @@ function browserAction(state, flags2 = {}, now = Date.now()) {
 
 // pickup/totp.mjs
 var import_node_crypto3 = require("node:crypto");
-function twoFactorCode(value, now = Date.now()) {
-  const raw = String(value ?? "").trim();
-  if (/^\d{6,8}$/.test(raw)) return raw;
-  let secret = raw;
-  try {
-    if (/^otpauth:\/\//i.test(raw)) secret = new URL(raw).searchParams.get("secret") ?? "";
-  } catch {
-  }
-  const normalized = secret.replace(/[\s-]/g, "").toUpperCase();
-  if (!/^[A-Z2-7]{16,}$/.test(normalized)) return raw;
+function twoFactorCode(secret, now = Date.now()) {
+  const normalized = String(secret ?? "").replace(/[\s=]/g, "").toUpperCase();
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   const bytes = [];
   let bits = 0;
@@ -68467,7 +68459,7 @@ async function main() {
     return;
   }
   const account = await response.json();
-  for (const value of [account.email, account.clientId, account.clientSecret, account.refreshToken, account.password, account.recoveryEmail, account.twoFactor]) if (value) console.log(`::add-mask::${value}`);
+  for (const value of [account.email, account.clientId, account.clientSecret, account.refreshToken, account.password, account.twoFactor]) if (value) console.log(`::add-mask::${value}`);
   const result = await (bootstrap ? fetchGmailBrowser(account) : fetchMailbox(account)).catch((error2) => ({ error: error2 instanceof AuthError ? error2.message === "unverified" ? "unverified" : "auth" : "unreachable" }));
   if (result.refreshToken) console.log(`::add-mask::${result.refreshToken}`);
   const reported = await call(bootstrap ? "bootstrap-report" : "report", bootstrap ? { error: result.error, refreshToken: result.refreshToken } : result);
