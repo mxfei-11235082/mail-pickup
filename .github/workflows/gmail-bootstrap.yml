@@ -1,0 +1,30 @@
+name: gmail bootstrap
+run-name: gmail bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: 'request id'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: 准备浏览器
+        run: |
+          if ! command -v Xvfb >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y xvfb; fi
+          command -v google-chrome >/dev/null 2>&1 || command -v google-chrome-stable >/dev/null 2>&1
+      - run: node pickup.cjs
+        env:
+          PICKUP_MODE: bootstrap
+          PICKUP_REQUEST: ${{ inputs.request }}
+          PICKUP_URL: ${{ secrets.PICKUP_URL }}
