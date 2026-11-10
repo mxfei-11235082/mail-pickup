@@ -9,6 +9,7 @@ for (const name of required) {
 const requestId = 'test'
 let report = null
 let child
+let debugOutput = ''
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1')
@@ -53,7 +54,7 @@ server.listen(0, '127.0.0.1', () => {
   if (!address || typeof address === 'string') throw new Error('listener')
   const base = `http://127.0.0.1:${address.port}/worker`
   child = spawn(process.execPath, ['test-pickup.cjs'], {
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
       PICKUP_MODE: 'bootstrap',
@@ -63,6 +64,7 @@ server.listen(0, '127.0.0.1', () => {
       ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'test',
     },
   })
+  child.stdout.on('data', (chunk) => { debugOutput += chunk.toString() })
   const timer = setTimeout(() => {
     console.error('bootstrap timeout')
     finish(1)
@@ -79,6 +81,8 @@ server.listen(0, '127.0.0.1', () => {
       finish(0)
       return
     }
+    const debugLines = debugOutput.split(/\r?\n/).filter((line) => line.startsWith('debug stage:'))
+    if (debugLines.length) console.log(debugLines.join('\n'))
     console.error(`bootstrap report: ${typeof report?.error === 'string' ? report.error : 'missing'}`)
     finish(1)
   })
