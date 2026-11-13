@@ -44505,6 +44505,7 @@ var require_websocket_server = __commonJS({
 // pickup/index.mjs
 var index_exports = {};
 __export(index_exports, {
+  failureDetail: () => failureDetail,
   fetchGmailApiMailbox: () => fetchGmailApiMailbox,
   fetchGmailBrowser: () => fetchGmailBrowser
 });
@@ -67929,6 +67930,15 @@ var AuthError = class extends Error {
     super(stage);
   }
 };
+function tagStage(error2, stage) {
+  if (error2 && typeof error2 === "object" && !error2.stage) error2.stage = stage;
+  return error2;
+}
+function failureDetail(error2) {
+  const codes = [error2?.name, error2?.code, error2?.cause?.code, error2?.responseStatus].filter((value) => typeof value === "string" && value);
+  const message = typeof error2?.message === "string" ? error2.message.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "<email>").slice(0, 160) : "";
+  return [error2?.stage ?? "unknown", ...new Set(codes), message].filter(Boolean).join(" ").slice(0, 300);
+}
 var PAGE_FIND = `const roots=[];const visit=(root)=>{if(!root||roots.includes(root))return;roots.push(root);if(!root.querySelectorAll)return;for(const el of root.querySelectorAll('*'))if(el.shadowRoot)visit(el.shadowRoot);for(const frame of root.querySelectorAll('iframe')){try{if(frame.contentDocument)visit(frame.contentDocument)}catch(e){}}};visit(document);const queryAll=(selector)=>roots.flatMap((root)=>[...root.querySelectorAll(selector)]);const pointOf=(el)=>{if(!el)return null;try{el.scrollIntoView({block:'center',inline:'center'})}catch(e){}const rect=el.getBoundingClientRect();let x=rect.left+rect.width/2;let y=rect.top+rect.height/2;let view=el.ownerDocument&&el.ownerDocument.defaultView;while(view&&view.frameElement){const frame=view.frameElement.getBoundingClientRect();x+=frame.left;y+=frame.top;view=view.parent}return{x,y}};`;
 var Cdp = class {
   constructor(socket) {
@@ -68040,7 +68050,10 @@ function limitHtml(messages) {
   });
 }
 async function fetchImapMailbox(account, host) {
-  const { token: token2, refreshToken } = await accessToken(account);
+  const { token: token2, refreshToken } = await accessToken(account).catch((error2) => {
+    throw tagStage(error2, "token");
+  });
+  let stage = "connect";
   const client = new ImapFlow({
     host,
     port: 993,
@@ -68054,6 +68067,7 @@ async function fetchImapMailbox(account, host) {
   client.on("error", () => void 0);
   try {
     await client.connect();
+    stage = "imap";
     const folders = (await client.list()).flatMap((box) => {
       if (box.specialUse === "\\Inbox" || /^inbox$/i.test(box.path)) return [{ path: box.path, folder: "inbox" }];
       if (box.specialUse === "\\Junk" || /^(junk|junk email|(?:\[gmail\]\/)?spam)$/i.test(box.path)) return [{ path: box.path, folder: "junk" }];
@@ -68069,7 +68083,7 @@ async function fetchImapMailbox(account, host) {
     messages.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
     return { scanned, messages: limitHtml(messages), refreshToken };
   } catch (error2) {
-    throw error2.authenticationFailed ? new AuthError() : error2;
+    throw error2.authenticationFailed ? new AuthError() : tagStage(error2, stage);
   } finally {
     client.close();
   }
@@ -68460,7 +68474,7 @@ async function main() {
   }
   const account = await response.json();
   for (const value of [account.email, account.clientId, account.clientSecret, account.refreshToken, account.password, account.twoFactor]) if (value) console.log(`::add-mask::${value}`);
-  const result = await (bootstrap ? fetchGmailBrowser(account) : fetchMailbox(account)).catch((error2) => ({ error: error2 instanceof AuthError ? error2.message === "unverified" ? "unverified" : "auth" : "unreachable" }));
+  const result = await (bootstrap ? fetchGmailBrowser(account) : fetchMailbox(account)).catch((error2) => error2 instanceof AuthError ? { error: error2.message === "unverified" ? "unverified" : "auth" } : { error: "unreachable", detail: failureDetail(error2) });
   if (result.refreshToken) console.log(`::add-mask::${result.refreshToken}`);
   const reported = await call(bootstrap ? "bootstrap-report" : "report", bootstrap ? { error: result.error, refreshToken: result.refreshToken } : result);
   console.log(reported.ok ? "\u5B8C\u6210" : `\u4EA4\u56DE\u7ED3\u679C\u5931\u8D25\uFF1AHTTP ${reported.status}`);
@@ -68470,6 +68484,7 @@ var invokedDirectly = Boolean(entry) && (import_meta.url === (0, import_node_url
 if (invokedDirectly) main().catch(() => console.log("\u53D6\u4EF6\u5931\u8D25")).finally(() => process.exit(0));
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  failureDetail,
   fetchGmailApiMailbox,
   fetchGmailBrowser
 });
