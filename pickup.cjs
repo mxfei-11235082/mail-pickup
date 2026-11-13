@@ -68436,7 +68436,7 @@ async function fetchGmailBrowser(account) {
 }
 async function fetchMailbox(account) {
   if (account.provider === "gmail") return fetchGmailApiMailbox(account);
-  return fetchImapMailbox(account, "outlook.live.com");
+  return fetchImapMailbox(account, "outlook.office365.com");
 }
 async function main() {
   const base = process.env.PICKUP_URL;
